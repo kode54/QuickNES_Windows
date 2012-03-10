@@ -101,7 +101,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.;c:\programming\nes_emu-0.7.0b1;..;c:\programming\foobar\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\..\Nes_Emu-0.7.0b1;..;..\..\..\programming\plugins\foobar\zlib;..\..\..\programming\plugins\File_Extractor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -179,7 +179,7 @@
     </Midl>
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.;c:\programming\nes_emu-0.7.0b1;..;c:\programming\foobar\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\..\Nes_Emu-0.7.0b1;..;..\..\..\programming\plugins\foobar\zlib;..\..\..\programming\plugins\File_Extractor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -316,10 +316,10 @@
     <ResourceCompile Include="Nes_Emu.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\File_Extractor\win32\File_Extractor\File_Extractor.vcxproj">
+    <ProjectReference Include="..\..\..\programming\plugins\File_Extractor\win32\File_Extractor\File_Extractor.vcxproj">
       <Project>{e7dd9fb8-a045-42a3-a25a-37a96b1421ae}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\foobar\zlib\zlib.vcxproj">
+    <ProjectReference Include="..\..\..\programming\plugins\foobar\zlib\zlib.vcxproj">
       <Project>{b91fdb47-3784-46cc-b23f-e863b60e87d4}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\Nes_Emu-0.7.0b1\win32\lib.vcxproj">

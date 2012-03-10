@@ -34,7 +34,7 @@ extern CAppModule _Module;
   #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-#include "../File_Extractor/fex/fex.h"
+#include <fex/fex.h>
 
 #include <nes_emu/Nes_Recorder.h>
 #include <nes_emu/Nes_Effects_Buffer.h>

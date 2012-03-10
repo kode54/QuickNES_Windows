@@ -7,31 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib", "..\..\Nes_Emu-0.7.0b
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nes_ntsc", "..\nes_ntsc\nes_ntsc.vcxproj", "{0A834B63-1293-4BD8-9F5A-87EA938EB563}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "File_Extractor", "..\..\File_Extractor\win32\File_Extractor\File_Extractor.vcxproj", "{E7DD9FB8-A045-42A3-A25A-37A96B1421AE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "File_Extractor", "..\..\..\programming\plugins\File_Extractor\win32\File_Extractor\File_Extractor.vcxproj", "{E7DD9FB8-A045-42A3-A25A-37A96B1421AE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "..\..\foobar\zlib\zlib.vcxproj", "{B91FDB47-3784-46CC-B23F-E863B60E87D4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "..\..\..\programming\plugins\foobar\zlib\zlib.vcxproj", "{B91FDB47-3784-46CC-B23F-E863B60E87D4}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 6
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://sabin:8080/tfs/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Nes_Emu.vcxproj
-		SccLocalPath1 = .
-		SccProjectUniqueName2 = ..\\..\\Nes_Emu-0.7.0b1\\win32\\lib.vcxproj
-		SccProjectName2 = ../../Nes_Emu-0.7.0b1/win32
-		SccLocalPath2 = ..\\..\\Nes_Emu-0.7.0b1\\win32
-		SccProjectUniqueName3 = ..\\nes_ntsc\\nes_ntsc.vcxproj
-		SccProjectName3 = ../nes_ntsc
-		SccLocalPath3 = ..\\nes_ntsc
-		SccProjectUniqueName4 = ..\\..\\File_Extractor\\win32\\File_Extractor\\File_Extractor.vcxproj
-		SccProjectName4 = ../../../../../../foobar2000/files/plugins.root/plugins/File_Extractor/win32/File_Extractor
-		SccLocalPath4 = ..\\..\\File_Extractor\\win32\\File_Extractor
-		SccProjectUniqueName5 = ..\\..\\foobar\\zlib\\zlib.vcxproj
-		SccProjectName5 = ../../../../../../foobar2000/files/plugins.root/plugins/foobar/zlib
-		SccLocalPath5 = ..\\..\\foobar\\zlib
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
