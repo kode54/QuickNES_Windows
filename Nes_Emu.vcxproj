@@ -247,6 +247,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="display\display_d2d.cpp" />
     <ClCompile Include="display\display_d3d9.cpp" />
     <ClCompile Include="guids.cpp" />
     <ClCompile Include="Nes_Emu.cpp" />

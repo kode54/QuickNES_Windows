@@ -126,6 +126,9 @@
     <ClCompile Include="sound\sound_out_xaudio2.cpp">
       <Filter>Source Files\sound</Filter>
     </ClCompile>
+    <ClCompile Include="display\display_d2d.cpp">
+      <Filter>Source Files\display</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="display\display.h">

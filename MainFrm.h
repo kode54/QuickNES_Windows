@@ -876,9 +876,15 @@ public:
 
 		if ( !err )
 		{
-			m_video = create_display_d3d9();
-			//err = m_video->open( m_emu.buffer_width, m_emu.buffer_height(), m_hWndClient );
+			m_video = create_display_d2d();
 			err = m_video->open( m_blitter.out_width(), m_blitter.out_height(), m_hWndClient );
+			if ( err )
+			{
+				delete m_video;
+				m_video = create_display_d3d9();
+				//err = m_video->open( m_emu.buffer_width, m_emu.buffer_height(), m_hWndClient );
+				err = m_video->open( m_blitter.out_width(), m_blitter.out_height(), m_hWndClient );
+			}
 		}
 
 		if ( err )

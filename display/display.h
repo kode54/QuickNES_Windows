@@ -30,5 +30,6 @@ public:
 display * create_display();
 display * create_display_d3d9();
 display * create_display_opengl();
+display * create_display_d2d();
 
 #endif
