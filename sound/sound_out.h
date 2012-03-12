@@ -10,9 +10,11 @@ public:
 
 	virtual const char* write_frame( void * buffer, unsigned num_samples, bool wait = true ) = 0;
 
+	virtual const char* set_ratio( double ratio ) = 0;
+
 	virtual const char* pause( bool pausing ) = 0;
 
-	virtual unsigned buffered() = 0;
+	virtual double buffered() = 0;
 };
 
 sound_out * create_sound_out();

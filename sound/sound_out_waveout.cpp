@@ -258,7 +258,12 @@ public:
 		return 0;
 	}
 
-	virtual unsigned buffered()
+	virtual const char* set_ratio( double )
+	{
+		return NULL;
+	}
+
+	virtual double buffered()
 	{
 		return buffered_count;
 	}

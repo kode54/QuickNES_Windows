@@ -19,8 +19,8 @@
 #include <zlib.h>
 
 static int sound_buffer_frames;
-static const int sound_buffer_frames_ds = 6;
-static const int sound_buffer_frames_xa = 5;
+static const int sound_buffer_frames_ds = 8;
+static const int sound_buffer_frames_xa = 6;
 
 /*static const int top_clip = 8; // first scanlines not visible on most televisions
 static const int bottom_clip = 4; // last scanlines ^*/
@@ -506,9 +506,18 @@ public:
 						stop_error( err );
 						return;
 					}
-					unsigned buffered = m_audio->buffered();
-					if ( buffered <= 1 ) sound_buffering = true;
-					else if ( sound_buffering && buffered == sound_buffer_frames ) sound_buffering = false;
+					double buffered = m_audio->buffered();
+					if ( buffered <= 1.0 ) sound_buffering = true;
+					else if ( sound_buffering && ( sound_buffer_frames - buffered ) < 1.0 ) sound_buffering = false;
+					if ( !sound_buffering && !! display_config.vsync )
+					{
+						double ratio;
+						double sound_buffer_frame_threshold = sound_buffer_frames - 1;
+						if ( buffered >= sound_buffer_frame_threshold ) ratio = 1.0 + ( ( buffered - sound_buffer_frame_threshold ) * 0.01 );
+						else ratio = 1.0 - ( ( sound_buffer_frame_threshold - buffered ) / sound_buffer_frame_threshold * 0.01 );
+						m_audio->set_ratio( ratio );
+					}
+					else m_audio->set_ratio( 1.0 );
 				}
 				else sound_buffering = false;
 

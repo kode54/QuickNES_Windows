@@ -54,6 +54,9 @@ class sound_out_i_xaudio2 : public sound_out
 	void OnBufferEnd()
 	{
 		InterlockedDecrement( &buffered_count );
+		LONG buffer_read_cursor = this->buffer_read_cursor;
+		samples_played += samples_in_buffer[ buffer_read_cursor ];
+		this->buffer_read_cursor = ( buffer_read_cursor + 1 ) % num_frames;
 	}
 
 	void          * hwnd;
@@ -61,14 +64,17 @@ class sound_out_i_xaudio2 : public sound_out
 	unsigned        reopen_count;
 	unsigned        sample_rate, nch, max_samples_per_frame, num_frames;
 	volatile LONG   buffered_count;
+	volatile LONG   buffer_read_cursor;
 	LONG            buffer_write_cursor;
 
+	volatile UINT64 samples_played;
+
 	int16_t       * sample_buffer;
+	UINT64        * samples_in_buffer;
 
 	IXAudio2               *xaud;
 	IXAudio2MasteringVoice *mVoice; // listener
 	IXAudio2SourceVoice    *sVoice; // sound source
-	XAUDIO2_BUFFER         *buf;
 	XAUDIO2_VOICE_STATE     vState;
 	XAudio2_BufferNotify    notify; // buffer end notification
 public:
@@ -136,11 +142,13 @@ public:
 		if (FAILED(hr)) return "Starting XAudio2 voice";
 		hr = sVoice->SetFrequencyRatio((float)1.0f);
 		if (FAILED(hr)) return "Setting XAudio2 voice frequency ratio";
-		buf = new XAUDIO2_BUFFER[ num_frames ];
-		memset( buf, 0, sizeof( XAUDIO2_BUFFER ) * num_frames );
 		buffered_count = 0;
+		buffer_read_cursor = 0;
 		buffer_write_cursor = 0;
+		samples_played = 0;
 		sample_buffer = new int16_t[ max_samples_per_frame * num_frames ];
+		samples_in_buffer = new UINT64[ num_frames ];
+		memset( samples_in_buffer, 0, sizeof( UINT64 ) * num_frames );
 		return NULL;
 	}
 
@@ -164,6 +172,8 @@ public:
 
 		delete [] sample_buffer;
 		sample_buffer = NULL;
+		delete [] samples_in_buffer;
+		samples_in_buffer = NULL;
 	}
 
 	virtual const char* write_frame( void * buffer, unsigned num_samples, bool wait )
@@ -207,10 +217,12 @@ public:
 				WaitForSingleObject( notify.hBufferEndEvent, INFINITE );
 			}
 		}
+		samples_in_buffer[ buffer_write_cursor ] = num_samples / nch;
 		XAUDIO2_BUFFER buf = {0};
 		unsigned num_bytes = num_samples * 2;
 		buf.AudioBytes = num_bytes;
 		buf.pAudioData = ( const BYTE * )( sample_buffer + max_samples_per_frame * buffer_write_cursor );
+		buf.pContext = this;
 		buffer_write_cursor = ( buffer_write_cursor + 1 ) % num_frames;
 		memcpy( ( void * ) buf.pAudioData, buffer, num_bytes );
 		if( sVoice->SubmitSourceBuffer( &buf ) == S_OK )
@@ -257,11 +269,20 @@ public:
 		return 0;
 	}
 
-	virtual unsigned buffered()
+	virtual const char* set_ratio( double ratio )
 	{
-		return buffered_count;
+		if ( FAILED( sVoice->SetFrequencyRatio( ratio ) ) ) return "setting ratio";
+		return 0;
 	}
 
+	virtual double buffered()
+	{
+		sVoice->GetState( &vState );
+		double buffered_count = vState.BuffersQueued;
+		INT64 samples_played = vState.SamplesPlayed - this->samples_played;
+		buffered_count -= double( samples_played ) / double( max_samples_per_frame / nch );
+		return buffered_count;
+	}
 };
 
 sound_out * create_sound_out_xaudio2()

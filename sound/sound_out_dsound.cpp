@@ -89,6 +89,11 @@ public:
 		return 0;
 	}
 
+	virtual const char* set_ratio( double ratio )
+	{
+		return 0;
+	}
+
 	virtual const char* pause( bool pausing )
 	{
 		p_stream->pause( paused = pausing );
@@ -96,11 +101,11 @@ public:
 		return 0;
 	}
 
-	virtual unsigned buffered()
+	virtual double buffered()
 	{
 		unsigned bytes = p_stream->get_latency_bytes();
 		unsigned write_max_bytes = max_samples_per_frame * 2;
-		return bytes / write_max_bytes;
+		return double( bytes ) / double( write_max_bytes );
 	}
 };
 
