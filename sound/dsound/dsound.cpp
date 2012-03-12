@@ -224,6 +224,8 @@ public:
 
 	virtual bool pause(bool status);
 
+	virtual bool set_ratio(double ratio);
+
 	bool update();
 
 };
@@ -364,7 +366,7 @@ bool ds_stream_i::update()
 
 		DSBUFFERDESC desc;
 		desc.dwSize = sizeof(desc);
-		desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2|DSBCAPS_STICKYFOCUS|DSBCAPS_GLOBALFOCUS;
+		desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2|DSBCAPS_STICKYFOCUS|DSBCAPS_GLOBALFOCUS|DSBCAPS_CTRLFREQUENCY;
 		desc.dwBufferBytes = buffer_size = ms2bytes(buffer_size_ms);
 		desc.dwReserved = 0;
 		desc.lpwfxFormat = &wfx;
@@ -632,6 +634,18 @@ bool ds_stream_i::pause(bool status)
 	{
 		pause_request = !!status;
 		return true;
+	}
+}
+
+
+bool ds_stream_i::set_ratio(double ratio)
+{
+	insync(g_sync);
+	if (b_error) return false;
+	else
+	{
+		if ( FAILED( p_dsb->SetFrequency( srate * ratio ) ) ) return false;
+		else return true;
 	}
 }
 

@@ -91,6 +91,7 @@ public:
 
 	virtual const char* set_ratio( double ratio )
 	{
+		if ( !p_stream->set_ratio( ratio ) ) return "setting ratio";
 		return 0;
 	}
 

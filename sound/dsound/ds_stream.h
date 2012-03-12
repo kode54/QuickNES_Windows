@@ -15,6 +15,7 @@ public:
 	virtual bool get_error(std::tstring & out)=0;
 	virtual bool force_play()=0;
 	virtual bool pause(bool status)=0;
+	virtual bool set_ratio(double ratio)=0;
 	
 	//destructor methods
 	virtual void release()=0;

@@ -516,8 +516,17 @@ public:
 						if ( buffered >= sound_buffer_frame_threshold ) ratio = 1.0 + ( ( buffered - sound_buffer_frame_threshold ) * 0.01 );
 						else ratio = 1.0 - ( ( sound_buffer_frame_threshold - buffered ) / sound_buffer_frame_threshold * 0.01 );
 						m_audio->set_ratio( ratio );
+#if 0
+						char temp[64];
+						_snprintf( temp, 63, "%1.6f - %1.6f\n", buffered, ratio );
+						temp[ 63 ] = 0;
+						OutputDebugStringA( temp );
+#endif
 					}
 					else m_audio->set_ratio( 1.0 );
+#if 0
+					if ( sound_buffering ) OutputDebugStringA( "Buffering\n" );
+#endif
 				}
 				else sound_buffering = false;
 
