@@ -73,6 +73,7 @@ protected:
 			windowSize,
 			wait ? D2D1_PRESENT_OPTIONS_NONE : D2D1_PRESENT_OPTIONS_IMMEDIATELY 
 		};
+		SafeRelease(m_hWndTarget);
 		hr = m_d2dFactory->CreateHwndRenderTarget(renderTargetProps, hWndRenderTargetProps, &m_hWndTarget);
 		if (hr != S_OK) return -1;
 		FLOAT dpiX, dpiY;
@@ -92,6 +93,7 @@ protected:
 		prevwidth=width;
 		prevheight=height;
 		waiting=wait;
+		SafeRelease(m_bitmap);
 		hr = m_hWndTarget->CreateBitmap(bitmapSize, bitmapProps, &m_bitmap);
 		if (hr != S_OK) return -1;
 		return 0;

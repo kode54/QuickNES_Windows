@@ -438,7 +438,7 @@ public:
 					input_last = input_now;
 				}
 
-				if ( emu_speed == 0 || ( emu_speed < 0 && m_emu.tell() <= m_emu.film().begin() ) )
+				if ( !emu_seeking && ( emu_speed == 0 || ( emu_speed < 0 && m_emu.tell() <= m_emu.film().begin() ) ) )
 				{
 					BOOL unused;
 					if ( emu_speed == 0 ) OnCorePause(0, 0, 0, unused);
@@ -575,8 +575,11 @@ public:
 				if ( --emu_step == 0 )
 				{
 					emu_state = emu_paused;
-					if ( m_controls ) m_controls->set_paused( true );
-					SetTimer( 0, 10 );
+					if ( !emu_seeking )
+					{
+						if ( m_controls ) m_controls->set_paused( true );
+						SetTimer( 0, 10 );
+					}
 				}
 			}
 		}
