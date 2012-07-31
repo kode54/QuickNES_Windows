@@ -9,12 +9,121 @@
 #include <windows.h>
 #include <XAudio2.h>
 #include <assert.h>
+#include <mmdeviceapi.h>
+#include <vector>
 #ifdef HAVE_KS_HEADERS
 #include <ks.h>
 #include <ksmedia.h>
 #endif
 
 #pragma comment ( lib, "winmm.lib" )
+
+class sound_out_i_xaudio2;
+
+void xaudio2_device_changed( sound_out_i_xaudio2 * );
+
+class XAudio2_Device_Notifier : public IMMNotificationClient
+{
+	volatile LONG registered;
+	IMMDeviceEnumerator *pEnumerator;
+
+	CRITICAL_SECTION lock;
+	std::vector<sound_out_i_xaudio2*> instances;
+
+public:
+	XAudio2_Device_Notifier() : registered( 0 )
+	{
+		InitializeCriticalSection( &lock );
+	}
+	~XAudio2_Device_Notifier()
+	{
+		DeleteCriticalSection( &lock );
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef()
+	{
+		return 1;
+	}
+
+	ULONG STDMETHODCALLTYPE Release()
+	{
+		return 1;
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, VOID **ppvInterface )
+	{
+		if (IID_IUnknown == riid)
+		{
+			*ppvInterface = (IUnknown*)this;
+		}
+		else if (__uuidof(IMMNotificationClient) == riid)
+		{
+			*ppvInterface = (IMMNotificationClient*)this;
+		}
+		else
+		{
+			*ppvInterface = NULL;
+			return E_NOINTERFACE;
+		}
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged( EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId )
+	{
+		EnterCriticalSection( &lock );
+		for ( auto it = instances.begin(); it < instances.end(); ++it )
+		{
+			xaudio2_device_changed( *it );
+		}
+		LeaveCriticalSection( &lock );
+
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnDeviceAdded( LPCWSTR pwstrDeviceId ) { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnDeviceRemoved( LPCWSTR pwstrDeviceId ) { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged( LPCWSTR pwstrDeviceId, DWORD dwNewState ) { return S_OK; }
+	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged( LPCWSTR pwstrDeviceId, const PROPERTYKEY key ) { return S_OK; }
+
+	void do_register(sound_out_i_xaudio2 * p_instance)
+	{
+		if ( InterlockedIncrement( &registered ) == 1 )
+		{
+			pEnumerator = NULL;
+			HRESULT hr = CoCreateInstance( __uuidof( MMDeviceEnumerator ), NULL, CLSCTX_INPROC_SERVER, __uuidof( IMMDeviceEnumerator ), ( void** ) &pEnumerator );
+			if ( SUCCEEDED( hr ) )
+			{
+				pEnumerator->RegisterEndpointNotificationCallback( this );
+				registered = true;
+			}
+		}
+
+		EnterCriticalSection( &lock );
+		instances.push_back( p_instance );
+		LeaveCriticalSection( &lock );
+	}
+
+	void do_unregister( sound_out_i_xaudio2 * p_instance )
+	{
+		if ( InterlockedDecrement( &registered ) == 0 )
+		{
+			pEnumerator->UnregisterEndpointNotificationCallback( this );
+			pEnumerator->Release();
+			registered = false;
+		}
+
+		EnterCriticalSection( &lock );
+		for ( auto it = instances.begin(); it < instances.end(); ++it )
+		{
+			if ( *it == p_instance )
+			{
+				instances.erase( it );
+				break;
+			}
+		}
+		LeaveCriticalSection( &lock );
+	}
+} g_notifier;
 
 class sound_out_i_xaudio2 : public sound_out
 {
@@ -61,6 +170,7 @@ class sound_out_i_xaudio2 : public sound_out
 
 	void          * hwnd;
 	bool            paused;
+	volatile bool   device_changed;
 	unsigned        reopen_count;
 	unsigned        sample_rate, nch, max_samples_per_frame, num_frames;
 	volatile LONG   buffered_count;
@@ -83,17 +193,27 @@ public:
 		paused = false;
 		reopen_count = 0;
 		buffered_count = 0;
+		device_changed = false;
 
 		xaud = NULL;
 		mVoice = NULL;
 		sVoice = NULL;
 		sample_buffer = NULL;
 		ZeroMemory( &vState, sizeof( vState ) );
+
+		g_notifier.do_register( this );
 	}
 
 	virtual ~sound_out_i_xaudio2()
 	{
+		g_notifier.do_unregister( this );
+
 		close();
+	}
+
+	void OnDeviceChanged()
+	{
+		device_changed = true;
 	}
 
 	virtual const char* open( void * hwnd, unsigned sample_rate, unsigned nch, unsigned max_samples_per_frame, unsigned num_frames )
@@ -142,6 +262,7 @@ public:
 		if (FAILED(hr)) return "Starting XAudio2 voice";
 		hr = sVoice->SetFrequencyRatio((float)1.0f);
 		if (FAILED(hr)) return "Setting XAudio2 voice frequency ratio";
+		device_changed = false;
 		buffered_count = 0;
 		buffer_read_cursor = 0;
 		buffer_write_cursor = 0;
@@ -159,10 +280,12 @@ public:
 				sVoice->Stop( 0 );
 			}
 			sVoice->DestroyVoice();
+			sVoice = NULL;
 		}
 
 		if( mVoice ) {
 			mVoice->DestroyVoice();
+			mVoice = NULL;
 		}
 
 		if( xaud ) {
@@ -178,6 +301,14 @@ public:
 
 	virtual const char* write_frame( void * buffer, unsigned num_samples, bool wait )
 	{
+		if ( device_changed )
+		{
+			close();
+			reopen_count = 5;
+			device_changed = false;
+			return 0;
+		}
+
 		if ( paused )
 		{
 			if ( wait ) Sleep( MulDiv( num_samples / nch, 1000, sample_rate ) );
@@ -213,8 +344,15 @@ public:
 				break;
 			} else {
 				// wait for one buffer to finish playing
-				ResetEvent( notify.hBufferEndEvent );
-				WaitForSingleObject( notify.hBufferEndEvent, INFINITE );
+				const DWORD timeout_ms = ( max_samples_per_frame / nch ) * num_frames * 1000 / sample_rate;
+				if ( WaitForSingleObject( notify.hBufferEndEvent, timeout_ms ) == WAIT_TIMEOUT )
+				{
+					// buffer has stalled, likely by the whole XAudio2 system failing, so we should tear it down and attempt to reopen it
+					close();
+					reopen_count = 5;
+
+					return 0;
+				}
 			}
 		}
 		samples_in_buffer[ buffer_write_cursor ] = num_samples / nch;
@@ -244,11 +382,14 @@ public:
 			if ( ! paused )
 			{
 				paused = true;
-				HRESULT hr = sVoice->Stop( 0 );
-				if ( FAILED(hr) )
+				if ( !reopen_count )
 				{
-					close();
-					reopen_count = 60 * 5;
+					HRESULT hr = sVoice->Stop( 0 );
+					if ( FAILED(hr) )
+					{
+						close();
+						reopen_count = 60 * 5;
+					}
 				}
 			}
 		}
@@ -257,11 +398,14 @@ public:
 			if ( paused )
 			{
 				paused = false;
-				HRESULT hr = sVoice->Start( 0 );
-				if ( FAILED(hr) )
+				if ( !reopen_count )
 				{
-					close();
-					reopen_count = 60 * 5;
+					HRESULT hr = sVoice->Start( 0 );
+					if ( FAILED(hr) )
+					{
+						close();
+						reopen_count = 60 * 5;
+					}
 				}
 			}
 		}
@@ -271,12 +415,13 @@ public:
 
 	virtual const char* set_ratio( double ratio )
 	{
-		if ( FAILED( sVoice->SetFrequencyRatio( ratio ) ) ) return "setting ratio";
+		if ( !reopen_count && FAILED( sVoice->SetFrequencyRatio( ratio ) ) ) return "setting ratio";
 		return 0;
 	}
 
 	virtual double buffered()
 	{
+		if ( reopen_count ) return 0.0;
 		sVoice->GetState( &vState );
 		double buffered_count = vState.BuffersQueued;
 		INT64 samples_played = vState.SamplesPlayed - this->samples_played;
@@ -284,6 +429,11 @@ public:
 		return buffered_count;
 	}
 };
+
+void xaudio2_device_changed( sound_out_i_xaudio2 * p_instance )
+{
+	p_instance->OnDeviceChanged();
+}
 
 sound_out * create_sound_out_xaudio2()
 {
